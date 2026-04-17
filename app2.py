@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # ---------------- CONFIG ----------------
-PWM_MIN = 1100
+PWM_MIN = 1000
 PWM_MAX = 1900
 MOTOR_COUNT = 4
 
