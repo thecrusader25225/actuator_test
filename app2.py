@@ -18,7 +18,7 @@ app.add_middleware(
 PWM_MIN = 1000
 PWM_MAX = 1900
 MOTOR_COUNT = 4
-
+current_pwm = [PWM_MIN] * MOTOR_COUNT
 # MAVSDK (telemetry + params)
 drone = System()
 
@@ -109,6 +109,7 @@ async def set_motors(values: list[float]):
 
     for i, v in enumerate(values):
         pwm = to_pwm(v)
+        current_pwm[i] = pwm
         await set_servo(i + 1, pwm)
 
     return {"status": "ok", "input": values}
@@ -139,7 +140,7 @@ async def ws(websocket: WebSocket):
         async for battery in drone.telemetry.battery():
             latest_data["voltage"] = battery.voltage_v
             latest_data["current"] = battery.current_battery_a
-            latest_data["remaining"] = battery.remaining_percent
+            latest_data["pwm"]=current_pwm
 
     # run telemetry in background
     task = asyncio.create_task(telemetry_task())
