@@ -85,19 +85,34 @@
   // -----------------------
   // WebSocket (GET)
   // -----------------------
+//   const ws = new WebSocket("ws://100.126.238.43:8000/ws");
+
+//   ws.onmessage = (event) => {
+//     const data = JSON.parse(event.data);
+
+//     document.getElementById("voltage").innerText = data.voltage.toFixed(2);
+//     document.getElementById("current").innerText = data.current.toFixed(2);
+//     document.getElementById("pwm").innerText = data.pwm.join(", ");
+//   };
+
+//   ws.onopen = () => console.log("WS connected");
+//   ws.onclose = () => console.log("WS disconnected");
+
+  function connectWS() {
   const ws = new WebSocket("ws://100.126.238.43:8000/ws");
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-
-    document.getElementById("voltage").innerText = data.voltage.toFixed(2);
-    document.getElementById("current").innerText = data.current.toFixed(2);
-    document.getElementById("pwm").innerText = data.pwm.join(", ");
+    updateUI(data);
   };
 
-  ws.onopen = () => console.log("WS connected");
-  ws.onclose = () => console.log("WS disconnected");
+  ws.onclose = () => {
+    console.log("WS disconnected, retrying...");
+    setTimeout(connectWS, 1000);
+  };
+}
 
+connectWS();
 
   // -----------------------
   // SET motors

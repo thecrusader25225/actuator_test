@@ -127,13 +127,30 @@ async def kill():
 @app.websocket("/ws")
 async def ws(websocket: WebSocket):
     await websocket.accept()
+    print("WS connected")
+
+    latest_data = {
+        "voltage": 0,
+        "current": 0,
+        "remaining": 0
+    }
+
+    async def telemetry_task():
+        async for battery in drone.telemetry.battery():
+            latest_data["voltage"] = battery.voltage_v
+            latest_data["current"] = battery.current_battery_a
+            latest_data["remaining"] = battery.remaining_percent
+
+    # run telemetry in background
+    task = asyncio.create_task(telemetry_task())
 
     try:
-        async for battery in drone.telemetry.battery():
+        while True:
             await websocket.send_json({
-                "voltage": battery.voltage_v,
-                "current": battery.current_battery_a,
-                "remaining": battery.remaining_percent
+                **latest_data
             })
+            await asyncio.sleep(0.1)  # 10 Hz
     except Exception as e:
-        print("WebSocket closed:", e)
+        print("WS disconnected:", e)
+    finally:
+        task.cancel()
