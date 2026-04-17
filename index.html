@@ -82,6 +82,8 @@
 
   let values = [0, 0, 0, 0];
 
+  
+
   // -----------------------
   // WebSocket (GET)
   // -----------------------
@@ -97,7 +99,17 @@
 
 //   ws.onopen = () => console.log("WS connected");
 //   ws.onclose = () => console.log("WS disconnected");
+function updateUI(data) {
+    console.log(data);
+  document.getElementById("voltage").innerText =
+    data.voltage?.toFixed(2) ?? "0";
 
+  document.getElementById("current").innerText =
+    data.current?.toFixed(2) ?? "0";
+
+  document.getElementById("pwm").innerText =
+    data.pwm ? data.pwm.join(", ") : "-";
+}
   function connectWS() {
   const ws = new WebSocket("ws://100.126.238.43:8000/ws");
 
