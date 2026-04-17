@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Motor Control</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #111;
+      color: #eee;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+    }
+
+    input[type=range] {
+      width: 100%;
+    }
+
+    button {
+      padding: 10px;
+      margin-top: 10px;
+      background: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Motor Control Panel</h2>
+
+<div class="card">
+  <h3>Telemetry</h3>
+  <p>Voltage: <span id="voltage">0</span> V</p>
+  <p>Current: <span id="current">0</span> A</p>
+  <p>PWM: <span id="pwm">-</span></p>
+</div>
+
+<div class="card">
+  <h3>Motors</h3>
+
+  <div>
+    Motor 1: <span id="m1_val">0</span>
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      oninput="updateMotor(0, this.value)">
+  </div>
+
+  <div>
+    Motor 2: <span id="m2_val">0</span>
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      oninput="updateMotor(1, this.value)">
+  </div>
+
+  <div>
+    Motor 3: <span id="m3_val">0</span>
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      oninput="updateMotor(2, this.value)">
+  </div>
+
+  <div>
+    Motor 4: <span id="m4_val">0</span>
+    <input type="range" min="0" max="1" step="0.01" value="0"
+      oninput="updateMotor(3, this.value)">
+  </div>
+
+  <button onclick="kill()">KILL</button>
+</div>
+
+<script>
+  const API = "http://100.126.238.43:8000";
+
+  let values = [0, 0, 0, 0];
+
+  // -----------------------
+  // WebSocket (GET)
+  // -----------------------
+  const ws = new WebSocket("ws://100.126.238.43:8000/ws");
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    document.getElementById("voltage").innerText = data.voltage.toFixed(2);
+    document.getElementById("current").innerText = data.current.toFixed(2);
+    document.getElementById("pwm").innerText = data.pwm.join(", ");
+  };
+
+  ws.onopen = () => console.log("WS connected");
+  ws.onclose = () => console.log("WS disconnected");
+
+
+  // -----------------------
+  // SET motors
+  // -----------------------
+  async function sendValues() {
+    await fetch(API + "/set", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(values)
+    });
+  }
+
+  async function initValues(){
+    await fetch(API+"/init",{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+  }
+
+  function updateMotor(index, value) {
+    values[index] = parseFloat(value);
+    document.getElementById(`m${index+1}_val`).innerText = value;
+    sendValues();
+  }
+
+  // -----------------------
+  // Kill switch
+  // -----------------------
+  function kill() {
+    values = [0, 0, 0, 0];
+    sendValues();
+
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById(`m${i}_val`).innerText = 0;
+    }
+
+    document.querySelectorAll("input[type=range]").forEach(s => s.value = 0);
+  }
+</script>
+
+</body>
+</html>

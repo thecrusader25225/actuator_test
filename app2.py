@@ -2,8 +2,17 @@ import asyncio
 from fastapi import FastAPI, WebSocket
 from mavsdk import System
 from pymavlink import mavutil
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------- CONFIG ----------------
 PWM_MIN = 1100
@@ -57,7 +66,10 @@ async def startup():
     await drone.param.set_param_int("ARMING_CHECK", 0)
     await drone.param.set_param_int("DISARM_DELAY", 60)
 
-    # ---- restore motors ----
+
+@app.post("/init")
+async def defaults():
+     # ---- restore motors ----
     print("Restoring motor functions...")
     await drone.param.set_param_int("SERVO1_FUNCTION", 33)
     await drone.param.set_param_int("SERVO2_FUNCTION", 34)
